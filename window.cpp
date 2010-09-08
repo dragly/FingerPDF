@@ -44,6 +44,9 @@ Window::Window(QWidget *parent)
     : QMainWindow(parent),
         ui(new Ui::MainWindow)
 {
+    setAttribute(Qt::WA_Maemo5StackedWindow);
+    setAttribute(Qt::WA_Maemo5AutoOrientation, true); // currently not working since libqt4-maemo5 is broken. Will work in PR1.2
+
     ui->setupUi(this);
 
     lastPath = QDir::homePath() + "/MyDocs/.documents";
@@ -99,7 +102,7 @@ void Window::openFile()
 
     if (path.isEmpty())
         return;
-
+    qDebug() << "Loading document" << path;
     if (documentWidget->setDocument(path)) {
         lastPath = path;
         ui->searchLineEdit->setEnabled(true);
@@ -144,5 +147,22 @@ void Window::on_actionSearch_triggered(bool checked)
         ui->searchDockWidget->show();
     } else {
         ui->searchDockWidget->hide();
+    }
+}
+
+void Window::on_fullscreenButton_clicked()
+{
+    this->showFullScreen();
+    ui->menuDockWidget->hide();
+}
+
+void Window::on_actionFullscreen_triggered(bool checked)
+{
+    if(checked) {
+        this->showFullScreen();
+        ui->menuDockWidget->hide();
+    } else {
+        this->showNormal();
+        ui->menuDockWidget->show();
     }
 }

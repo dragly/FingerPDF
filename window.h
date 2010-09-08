@@ -54,6 +54,8 @@ public:
     Window(QWidget *parent = 0);
 
 private slots:
+    void on_actionFullscreen_triggered(bool checked);
+    void on_fullscreenButton_clicked();
     void on_actionSearch_triggered(bool checked);
     void checkSearchText(const QString &text);
     void openFile();

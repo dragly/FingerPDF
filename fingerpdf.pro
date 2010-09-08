@@ -1,9 +1,11 @@
 FORMS         = window.ui
 HEADERS       = documentwidget.h \
-                window.h
+                window.h \
+    imageloader.h
 SOURCES       = documentwidget.cpp \
                 main.cpp \
-                window.cpp
+                window.cpp \
+    imageloader.cpp
 
 CONFIG          += link_pkgconfig
 PKGCONFIG       += poppler-qt4

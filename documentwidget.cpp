@@ -39,21 +39,66 @@
 #include <QtGui>
 #include <poppler-qt4.h>
 #include "documentwidget.h"
+#include "imageloader.h"
 
 DocumentWidget::DocumentWidget(QWidget *parent)
-    : QLabel(parent)
+    : QWidget(parent)
 {
     mouseMode = ScrollMode;
     currentPage = -1;
     doc = 0;
     rubberBand = 0;
     scaleFactor = 1.0;
-    setAlignment(Qt::AlignCenter);
+    kineticTimer = new QTimer(this);
+    kineticTimer->setInterval((int)1.0/25); // kinetic scrolling with 25 fps
+    connect(kineticTimer, SIGNAL(timeout()),
+            SLOT(updateKinetics()));
+    time.start();
+    connect(&imageLoader, SIGNAL(pageLoaded(int,QImage)),
+            SLOT(pageLoaded(int,QImage)));
+    //    setAlignment(Qt::AlignCenter);
 }
 
 DocumentWidget::~DocumentWidget()
 {
     delete doc;
+}
+
+void DocumentWidget::paintEvent(QPaintEvent *event) {
+
+    if(currentPagePosition.y() + currentPixmap.height() < 0) {
+        if(currentPage < document()->numPages() - 1) {
+            currentPagePosition.setY(currentPagePosition.y() + currentPixmap.height());
+            qDebug() << "Next page please...";
+            showPage(currentPage + 2);
+//            return;
+        }
+    } else if(currentPagePosition.y() > currentPixmap.height()) {
+        if(currentPage > 0) {
+            currentPagePosition.setY(currentPagePosition.y() - currentPixmap.height());
+            qDebug() << "Previous page please...";
+            showPage(currentPage);
+//            return;
+        }
+    }
+    QPainter painter(this);
+    //    painter.drawText(rect(), Qt::AlignCenter, "Hello World");
+    QPointF prevPixmapPosition = currentPagePosition - QPointF(0, currentPixmap.height() + 10);
+    QPointF nextPixmapPosition = currentPagePosition + QPointF(0, currentPixmap.height() + 10);
+    painter.drawPixmap(currentPagePosition, currentPixmap);
+    if(currentPage > 0) {
+        painter.drawPixmap(prevPixmapPosition, prevPixmap);
+    }
+    painter.drawPixmap(nextPixmapPosition, nextPixmap);
+
+    //    if (!searchLocation.isEmpty()) {
+    //        QRect highlightRect = matrix().mapRect(searchLocation).toRect();
+    //        highlightRect.adjust(-2, -2, 2, 2);
+    //        painter.fillRect(image.rect(), QColor(0, 0, 0, 32));
+    //        painter.drawImage(highlightRect, highlight);
+    //        painter.end();
+    //    }
+
 }
 
 Poppler::Document *DocumentWidget::document()
@@ -72,14 +117,24 @@ void DocumentWidget::mousePressEvent(QMouseEvent *event)
 {
     if (!doc)
         return;
+    int currentTime = time.elapsed();
 
     if(mouseMode == ScrollMode) {
-
+        dragCurrentPosition = event->pos();
+        dragStartPosition = event->pos();
+        dragLastPosition = event->pos();
+        dragLongPosition = event->pos();
+        dragLongNextPosition = event->pos();
+        dragLongTime = currentTime;
+        dragLastTime = currentTime;
+        dragStartTime = currentTime;
+        kineticTimer->stop();
+        kineticSpeed *= 0;
     } else if(mouseMode == SelectMode) {
-        dragPosition = event->pos();
+        dragCurrentPosition = event->pos();
         if (!rubberBand)
             rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
-        rubberBand->setGeometry(QRect(dragPosition, QSize()));
+        rubberBand->setGeometry(QRect(dragCurrentPosition.toPoint(), QSize()));
         rubberBand->show();
     }
 }
@@ -89,10 +144,36 @@ void DocumentWidget::mouseMoveEvent(QMouseEvent *event)
     if (!doc)
         return;
 
+    int currentTime = time.elapsed();
     if(mouseMode == ScrollMode) {
-
+        dragCurrentPosition = event->pos();
+        drag = dragCurrentPosition - dragLastPosition;
+        dragLong = dragCurrentPosition - dragLongPosition;
+        if(currentTime - dragLongTime > 200 && currentTime - dragLongTime < 250) { // time to set dragNext
+            dragLongNextPosition = dragCurrentPosition;
+        }
+        if(currentTime - dragLongTime > 400) {
+            dragLongTime = currentTime;
+            dragLongPosition = dragLongNextPosition;
+        }
+        //        qDebug() << dragLong.x() << dragLong.y() << (double)dragLong.x() / (double) dragLong.y();
+        double aspect = (double)dragLong.x() / (double) dragLong.y();
+        if(0.6 < fabs(aspect) && fabs(aspect) < 2.5) { // diagonal drag
+            currentPagePosition += drag;
+        } else { //
+            if(abs(dragLong.x()) > abs(dragLong.y())) {
+                currentPagePosition.setX(currentPagePosition.x() + drag.x());
+            } else if(abs(dragLong.x()) < abs(dragLong.y())) {
+                currentPagePosition.setY(currentPagePosition.y() + drag.y());
+            } else { // they are the same, but will probably not happen
+                currentPagePosition += drag;
+            }
+        }
+        dragLastPosition = event->pos();
+        dragLastTime = currentTime;
+        update();
     } else if(mouseMode == SelectMode) {
-        rubberBand->setGeometry(QRect(dragPosition, event->pos()).normalized());
+        rubberBand->setGeometry(QRect(dragCurrentPosition.toPoint(), event->pos()).normalized());
     }
 }
 
@@ -101,19 +182,60 @@ void DocumentWidget::mouseReleaseEvent(QMouseEvent *)
     if (!doc)
         return;
 
+    int currentTime = time.elapsed();
     if(mouseMode == ScrollMode) {
-
+        int timeElapsed = currentTime - dragStartTime;
+        QPointF dragVector = dragCurrentPosition - dragStartPosition;
+        int dragLength = (dragVector).manhattanLength();
+        if(timeElapsed > 1 && dragLength > 1) {
+            kineticSpeed = (dragVector) / (double)(timeElapsed);
+            kineticTimer->start();
+            currentPagePositionPoint = currentPagePosition.toPoint();
+            lastKineticTime = time.elapsed();
+            double aspect = (double)dragLong.x() / (double) dragLong.y();
+            if(0.6 < fabs(aspect) && fabs(aspect) < 2.5) { // diagonal drag
+                // nothing changes
+            } else { //
+                if(abs(dragLong.x()) > abs(dragLong.y())) {
+                    kineticSpeed.setY(0);
+                } else if(abs(dragLong.x()) < abs(dragLong.y())) {
+                    kineticSpeed.setX(0);
+                }
+            }
+            if(kineticSpeed.manhattanLength() > 2) { // something went wrong, too high speed!
+                kineticSpeed *= 0;
+            }
+        }
+        dragLastTime = currentTime;
     } else if(mouseMode == SelectMode) {
         if (!rubberBand->size().isEmpty()) {
             // Correct for the margin around the image in the label.
             QRectF rect = QRectF(rubberBand->pos(), rubberBand->size());
-            rect.moveLeft(rect.left() - (width() - pixmap()->width()) / 2.0);
-            rect.moveTop(rect.top() - (height() - pixmap()->height()) / 2.0);
+            //            rect.moveLeft(rect.left() - (width() - pixmap()->width()) / 2.0);
+            //            rect.moveTop(rect.top() - (height() - pixmap()->height()) / 2.0);
             selectedText(rect);
         }
 
         rubberBand->hide();
     }
+}
+
+void DocumentWidget::updateKinetics() {
+    //    qDebug() << kineticSpeed;
+    int currentTime = time.elapsed();
+    int elapsedTime = currentTime - lastKineticTime;
+    kineticSpeed -= 0.03 * kineticSpeed; // "friction"
+
+    currentPagePosition = currentPagePosition + (kineticSpeed * (double)elapsedTime);
+    if(currentPagePositionPoint != currentPagePosition.toPoint()) {
+        currentPagePositionPoint = currentPagePosition.toPoint();
+        update();
+    }
+    if(kineticSpeed.manhattanLength() < 0.1) {
+        kineticTimer->stop();
+        kineticSpeed *= 0;
+    }
+    lastKineticTime = currentTime;
 }
 
 qreal DocumentWidget::scale() const
@@ -123,26 +245,68 @@ qreal DocumentWidget::scale() const
 
 void DocumentWidget::showPage(int page)
 {
+    if(page - 1 == currentPage) { // do nothing
+
+    } else if(page - 1 < currentPage) {
+        nextPixmap = currentPixmap;
+        currentPixmap = prevPixmap;
+        if(page - 2 > 0) { // load prevPixmap
+            prevPixmap = QPixmap(currentPixmap.width(), currentPixmap.height());
+            QPainter painter(&prevPixmap);
+            painter.setBrush(Qt::lightGray);
+            painter.drawRect(nextPixmap.rect());
+            painter.setPen(Qt::black);
+            painter.drawText(nextPixmap.rect(), Qt::AlignCenter, "Loading...");
+            painter.end();
+            imageLoader.loadPage(page - 2, scaleFactor, physicalDpiX(), physicalDpiY());
+        } else {
+            prevPixmap = QPixmap();
+        }
+    } else if (page - 1 > currentPage){
+        prevPixmap = currentPixmap;
+        currentPixmap = nextPixmap;
+        if(page - 1 < document()->numPages() - 1) { // load nextPixmap
+            nextPixmap = QPixmap(currentPixmap.width(), currentPixmap.height());
+            QPainter painter(&nextPixmap);
+            painter.setBrush(Qt::lightGray);
+            painter.drawRect(nextPixmap.rect());
+            painter.setPen(Qt::black);
+            painter.drawText(nextPixmap.rect(), Qt::AlignCenter, "Loading...");
+            painter.end();
+            imageLoader.loadPage(page, scaleFactor, physicalDpiX(), physicalDpiY());
+        } else {
+            nextPixmap = QPixmap();
+        }
+    }
+
     if (page != -1 && page != currentPage + 1) {
         currentPage = page - 1;
         emit pageChanged(page);
     }
 
-    QImage image = doc->page(currentPage)
-                   ->renderToImage(scaleFactor * physicalDpiX(), scaleFactor * physicalDpiY());
-
-    if (!searchLocation.isEmpty()) {
-        QRect highlightRect = matrix().mapRect(searchLocation).toRect();
-        highlightRect.adjust(-2, -2, 2, 2);
-        QImage highlight = image.copy(highlightRect);
-        QPainter painter;
-        painter.begin(&image);
-        painter.fillRect(image.rect(), QColor(0, 0, 0, 32));
-        painter.drawImage(highlightRect, highlight);
-        painter.end();
+    if(currentPixmap.isNull()) {
+        imageLoader.loadPage(page - 1, scaleFactor, physicalDpiX(), physicalDpiY());
     }
 
-    setPixmap(QPixmap::fromImage(image));
+    update();
+}
+
+void DocumentWidget::pageLoaded(int page, QImage image) {
+    qDebug() << "Page has been loaded" << image.isNull();
+    qDebug() << "currentPage" << currentPage << "recieved page" << page;
+    if(page == currentPage) {
+        qDebug() << "Setting current";
+        currentPixmap = QPixmap::fromImage(image);
+    } else if(page + 1 == currentPage) {
+        qDebug() << "Setting prevPixmap";
+        prevPixmap = QPixmap::fromImage(image);
+
+    } else if(page - 1 == currentPage) {
+        qDebug() << "Setting nextPixmap";
+
+        nextPixmap = QPixmap::fromImage(image);
+    }
+    update();
 }
 
 QRectF DocumentWidget::searchBackwards(const QString &text)
@@ -281,6 +445,7 @@ bool DocumentWidget::setDocument(const QString &filePath)
         searchLocation = QRectF();
         currentPage = -1;
         setPage(1);
+        imageLoader.setDocument(doc);
     }
     return doc != 0;
 }

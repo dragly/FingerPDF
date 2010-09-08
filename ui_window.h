@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'window.ui'
 **
-** Created: Mon Sep 6 18:59:44 2010
+** Created: Tue Sep 7 01:48:41 2010
 **      by: Qt User Interface Compiler version 4.6.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -43,17 +43,11 @@ public:
     QAction *documentControlsAction;
     QAction *selectedTextAction;
     QAction *actionSearch;
+    QAction *actionFullscreen;
     QWidget *centralwidget;
     QVBoxLayout *verticalLayout;
     QScrollArea *scrollArea;
     QWidget *scrollAreaWidgetContents;
-    QHBoxLayout *horizontalLayout;
-    QSpacerItem *horizontalSpacer_2;
-    QHBoxLayout *_2;
-    QLabel *pageLabel;
-    QSpinBox *pageSpinBox;
-    QComboBox *scaleComboBox;
-    QSpacerItem *horizontalSpacer;
     QMenuBar *menubar;
     QMenu *menu_File;
     QStatusBar *statusbar;
@@ -64,6 +58,15 @@ public:
     QLineEdit *searchLineEdit;
     QPushButton *findButton;
     QComboBox *searchComboBox;
+    QDockWidget *menuDockWidget;
+    QWidget *dockWidgetContents;
+    QHBoxLayout *horizontalLayout_2;
+    QSpacerItem *horizontalSpacer_2;
+    QLabel *pageLabel;
+    QSpinBox *pageSpinBox;
+    QComboBox *scaleComboBox;
+    QSpacerItem *horizontalSpacer;
+    QPushButton *fullscreenButton;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -90,6 +93,9 @@ public:
         actionSearch = new QAction(MainWindow);
         actionSearch->setObjectName(QString::fromUtf8("actionSearch"));
         actionSearch->setCheckable(true);
+        actionFullscreen = new QAction(MainWindow);
+        actionFullscreen->setObjectName(QString::fromUtf8("actionFullscreen"));
+        actionFullscreen->setCheckable(true);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
@@ -106,45 +112,10 @@ public:
         scrollArea->setAlignment(Qt::AlignCenter);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 852, 292));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 852, 405));
         scrollArea->setWidget(scrollAreaWidgetContents);
 
         verticalLayout->addWidget(scrollArea);
-
-        horizontalLayout = new QHBoxLayout();
-        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
-        horizontalSpacer_2 = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout->addItem(horizontalSpacer_2);
-
-        _2 = new QHBoxLayout();
-        _2->setObjectName(QString::fromUtf8("_2"));
-        pageLabel = new QLabel(centralwidget);
-        pageLabel->setObjectName(QString::fromUtf8("pageLabel"));
-
-        _2->addWidget(pageLabel);
-
-        pageSpinBox = new QSpinBox(centralwidget);
-        pageSpinBox->setObjectName(QString::fromUtf8("pageSpinBox"));
-        pageSpinBox->setEnabled(false);
-
-        _2->addWidget(pageSpinBox);
-
-
-        horizontalLayout->addLayout(_2);
-
-        scaleComboBox = new QComboBox(centralwidget);
-        scaleComboBox->setObjectName(QString::fromUtf8("scaleComboBox"));
-        scaleComboBox->setEnabled(false);
-
-        horizontalLayout->addWidget(scaleComboBox);
-
-        horizontalSpacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        horizontalLayout->addItem(horizontalSpacer);
-
-
-        verticalLayout->addLayout(horizontalLayout);
 
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
@@ -193,15 +164,56 @@ public:
         horizontalLayout_3->addWidget(searchComboBox);
 
         searchDockWidget->setWidget(dockWidgetContents_3);
-        MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(8), searchDockWidget);
+        MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(4), searchDockWidget);
+        menuDockWidget = new QDockWidget(MainWindow);
+        menuDockWidget->setObjectName(QString::fromUtf8("menuDockWidget"));
+        menuDockWidget->setFloating(false);
+        menuDockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
+        dockWidgetContents = new QWidget();
+        dockWidgetContents->setObjectName(QString::fromUtf8("dockWidgetContents"));
+        horizontalLayout_2 = new QHBoxLayout(dockWidgetContents);
+        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        horizontalSpacer_2 = new QSpacerItem(282, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        horizontalLayout_2->addItem(horizontalSpacer_2);
+
+        pageLabel = new QLabel(dockWidgetContents);
+        pageLabel->setObjectName(QString::fromUtf8("pageLabel"));
+
+        horizontalLayout_2->addWidget(pageLabel);
+
+        pageSpinBox = new QSpinBox(dockWidgetContents);
+        pageSpinBox->setObjectName(QString::fromUtf8("pageSpinBox"));
+        pageSpinBox->setEnabled(false);
+
+        horizontalLayout_2->addWidget(pageSpinBox);
+
+        scaleComboBox = new QComboBox(dockWidgetContents);
+        scaleComboBox->setObjectName(QString::fromUtf8("scaleComboBox"));
+        scaleComboBox->setEnabled(false);
+
+        horizontalLayout_2->addWidget(scaleComboBox);
+
+        horizontalSpacer = new QSpacerItem(281, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        horizontalLayout_2->addItem(horizontalSpacer);
+
+        fullscreenButton = new QPushButton(dockWidgetContents);
+        fullscreenButton->setObjectName(QString::fromUtf8("fullscreenButton"));
+
+        horizontalLayout_2->addWidget(fullscreenButton);
+
+        menuDockWidget->setWidget(dockWidgetContents);
+        MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(8), menuDockWidget);
 #ifndef QT_NO_SHORTCUT
-        pageLabel->setBuddy(pageSpinBox);
         searchLabel->setBuddy(searchLineEdit);
+        pageLabel->setBuddy(pageSpinBox);
 #endif // QT_NO_SHORTCUT
 
         menubar->addAction(menu_File->menuAction());
         menu_File->addAction(openAction);
         menu_File->addAction(actionSearch);
+        menu_File->addAction(actionFullscreen);
 
         retranslateUi(MainWindow);
 
@@ -226,6 +238,19 @@ public:
         selectedTextAction->setText(QApplication::translate("MainWindow", "&Selected Text", 0, QApplication::UnicodeUTF8));
         actionSearch->setText(QApplication::translate("MainWindow", "&Search", 0, QApplication::UnicodeUTF8));
         actionSearch->setShortcut(QApplication::translate("MainWindow", "Ctrl+F", 0, QApplication::UnicodeUTF8));
+        actionFullscreen->setText(QApplication::translate("MainWindow", "&Fullscreen", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        actionFullscreen->setToolTip(QApplication::translate("MainWindow", "Fullscreen", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        actionFullscreen->setShortcut(QApplication::translate("MainWindow", "Ctrl+Return", 0, QApplication::UnicodeUTF8));
+        menu_File->setTitle(QApplication::translate("MainWindow", "Menu", 0, QApplication::UnicodeUTF8));
+        searchLabel->setText(QApplication::translate("MainWindow", "&Search:", 0, QApplication::UnicodeUTF8));
+        findButton->setText(QApplication::translate("MainWindow", "&Find", 0, QApplication::UnicodeUTF8));
+        searchComboBox->clear();
+        searchComboBox->insertItems(0, QStringList()
+         << QApplication::translate("MainWindow", "Forwards", 0, QApplication::UnicodeUTF8)
+         << QApplication::translate("MainWindow", "Backwards", 0, QApplication::UnicodeUTF8)
+        );
         pageLabel->setText(QApplication::translate("MainWindow", "&Page:", 0, QApplication::UnicodeUTF8));
         scaleComboBox->clear();
         scaleComboBox->insertItems(0, QStringList()
@@ -239,14 +264,7 @@ public:
          << QApplication::translate("MainWindow", "300%", 0, QApplication::UnicodeUTF8)
          << QApplication::translate("MainWindow", "400%", 0, QApplication::UnicodeUTF8)
         );
-        menu_File->setTitle(QApplication::translate("MainWindow", "Menu", 0, QApplication::UnicodeUTF8));
-        searchLabel->setText(QApplication::translate("MainWindow", "&Search:", 0, QApplication::UnicodeUTF8));
-        findButton->setText(QApplication::translate("MainWindow", "&Find", 0, QApplication::UnicodeUTF8));
-        searchComboBox->clear();
-        searchComboBox->insertItems(0, QStringList()
-         << QApplication::translate("MainWindow", "Forwards", 0, QApplication::UnicodeUTF8)
-         << QApplication::translate("MainWindow", "Backwards", 0, QApplication::UnicodeUTF8)
-        );
+        fullscreenButton->setText(QApplication::translate("MainWindow", "FS", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

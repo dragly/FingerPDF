@@ -42,10 +42,12 @@
 #include <QLabel>
 #include <QRectF>
 #include <poppler-qt4.h>
+#include "imageloader.h"
 
 class QRubberBand;
+class ImageLoader;
 
-class DocumentWidget : public QLabel
+class DocumentWidget : public QWidget
 {
     Q_OBJECT
 
@@ -64,15 +66,20 @@ public slots:
     bool setDocument(const QString &filePath);
     void setPage(int page = -1);
     void setScale(qreal scale);
+    void pageLoaded(int page, QImage image);
 
 protected:
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
+    void paintEvent(QPaintEvent *event);
 
 signals:
     void pageChanged(int currentPage);
     void textSelected(const QString &text);
+
+private slots:
+    void updateKinetics();
 
 private:
     void selectedText(const QRectF &rect);
@@ -80,12 +87,37 @@ private:
 
     Poppler::Document *doc;
     int currentPage;
-    QPoint dragPosition;
+    QPointF dragCurrentPosition;
+    QPointF dragLastPosition;
+    QPointF dragStartPosition;
+    int dragStartTime;
+    int dragLastTime;
+    QPointF dragLongPosition;
+    QPointF dragLongNextPosition;
+    QPointF drag;
+    QPointF dragLong;
+    int dragLongTime;
     QRubberBand *rubberBand;
     QRectF searchLocation;
     qreal scaleFactor;
+    QPoint currentPagePositionPoint;
+    QPointF currentPagePosition;
+    QPointF prevPagePosition;
+    QPointF nextPagePosition;
 
     int mouseMode;
+
+    QPixmap currentPixmap;
+    QPixmap nextPixmap;
+    QPixmap prevPixmap;
+
+    QTime time;
+    QTimer *kineticTimer;
+    QPointF kineticSpeed;
+    int lastKineticTime;
+
+    ImageLoader imageLoader;
+
 };
 
 #endif
